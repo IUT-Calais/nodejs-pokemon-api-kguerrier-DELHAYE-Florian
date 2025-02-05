@@ -1,11 +1,12 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express, { Request, Response } from 'express';
+import { PrismaClient, PokemonCard } from '@prisma/client';
 
 export const app = express();
 const port = process.env.PORT || 3000;
 const prisma = new PrismaClient();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 export const server = app.listen(port);
 
@@ -14,14 +15,14 @@ export function stopServer() {
 }
 
 // Accueil
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Bienvenue 👋' });
 });
 
 // Listes des pokémons
-app.get('/pokemons-cards', async (req, res) => {
+app.get('/pokemons-cards', async (req: Request, res: Response) => {
   try {
-    const pokemonCards = await prisma.pokemonCard.findMany();
+    const pokemonCards: PokemonCard[] = await prisma.pokemonCard.findMany();
     res.json(pokemonCards);
   } catch (error) {
     res.status(500).json({ error: 'Une erreur est survenue' });
@@ -29,11 +30,40 @@ app.get('/pokemons-cards', async (req, res) => {
 });
 
 // Pokémon spécifique
-app.get('/pokemons-cards', async (req, res) => {
+app.get('/pokemons-cards/:id', async (req: Request, res: Response) => {
   try {
-    const pokemonCards = await prisma.pokemonCard.findMany();
-    res.json(pokemonCards);
+    const pokemonCard: PokemonCard | null = await prisma.pokemonCard.findUnique({
+      where: {
+        id: parseInt(req.params.id),
+      }
+    });
+    res.json(pokemonCard);
   } catch (error) {
     res.status(500).json({ error: 'Une erreur est survenue' });
   }
 });
+
+// Ajout d'un pokémon
+app.post('/pokemons-cards', async (req: Request, res: Response) => {
+  try {
+    console.log('Request body:', req.body); 
+    const pokemonCard: PokemonCard = await prisma.pokemonCard.create({
+      data: {
+        name: req.body.name,
+        pokedexId: req.body.pokedexId,
+        typeId: req.body.typeId,
+        lifePoints: req.body.lifePoints,
+        weight: req.body.weight,
+        size: req.body.size,
+        imageUrl: req.body.imageUrl
+      }
+    });
+    res.json(pokemonCard);
+  } catch (error) {
+    res.status(500).json({ 
+      error: error,
+      body: req.body,
+    });
+  }
+});
+
