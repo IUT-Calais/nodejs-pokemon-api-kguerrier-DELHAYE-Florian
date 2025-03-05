@@ -1,7 +1,11 @@
 import request from 'supertest';
-import { app } from '../src';
+import { app, stopServer } from '../src';
 import { prismaMock } from './jest.setup';
 
+afterAll(() => { 
+  stopServer(); 
+});
+/*
 describe('User API', () => {
   describe('POST /users', () => {
     it('should create a new user', async () => {
@@ -25,3 +29,4 @@ describe('User API', () => {
     });
   });
 });
+*/

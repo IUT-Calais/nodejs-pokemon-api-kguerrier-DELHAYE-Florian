@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import { PrismaClient, PokemonCard } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../client';
 
 export const getPokemons = async (req: Request, res: Response) => {
   try {
     const pokemonCards: PokemonCard[] = await prisma.pokemonCard.findMany();
-    res.json(pokemonCards);
+    if (pokemonCards) {
+      res.status(200).json(pokemonCards);
+      return
+    }
+    res.status(400).json({ error: 'Pokémons introuvable' })
   } catch (error) {
     res.status(500).json({ error: 'Une erreur est survenue' });
   }
@@ -19,7 +22,11 @@ export const getPokemonById = async (req: Request, res: Response) => {
         id: parseInt(req.params.id),
       }
     });
-    res.json(pokemonCard);
+    if (pokemonCard) {
+      res.status(200).json(pokemonCard);
+      return
+    }
+    res.status(400).json({ error: 'Pokémon introuvable' })
   } catch (error) {
     res.status(500).json({ 
       error: error,
