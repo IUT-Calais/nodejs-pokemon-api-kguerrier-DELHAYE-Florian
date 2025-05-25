@@ -1,0 +1,251 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Pokemon Cards API",
+    "version": "1.0.0",
+    "description": "API de gestion des cartes Pokémon et des utilisateurs"
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "paths": {
+    "/pokemons-cards": {
+      "get": {
+        "summary": "Liste toutes les cartes Pokémon",
+        "tags": ["Pokemons"],
+        "responses": {
+          "200": {
+            "description": "Liste des cartes Pokémon",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/PokemonCard" } }
+              }
+            }
+          },
+          "404": { "description": "Aucun Pokémon trouvé" }
+        }
+      },
+      "post": {
+        "summary": "Créer une carte Pokémon",
+        "tags": ["Pokemons"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PokemonCard" },
+              "example": {
+                "name": "Pikachu",
+                "pokedexId": 25,
+                "typeId": 5,
+                "lifePoints": 35,
+                "weight": 6,
+                "size": 0.4,
+                "imageUrl": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Carte Pokémon créée" },
+          "400": { "description": "Champs requis manquants ou doublon" }
+        }
+      }
+    },
+    "/pokemons-cards/{id}": {
+      "get": {
+        "summary": "Récupère une carte Pokémon par son ID",
+        "tags": ["Pokemons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carte Pokémon trouvée",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PokemonCard" } } }
+          },
+          "404": { "description": "Pokémon introuvable" }
+        }
+      },
+      "put": {
+        "summary": "Met à jour une carte Pokémon",
+        "tags": ["Pokemons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PokemonCard" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Carte Pokémon mise à jour" },
+          "400": { "description": "Nom ou pokedexId déjà utilisé ou type inexistant" },
+          "404": { "description": "Pokémon introuvable" }
+        }
+      },
+      "delete": {
+        "summary": "Supprime une carte Pokémon",
+        "tags": ["Pokemons"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "204": { "description": "Carte Pokémon supprimée" },
+          "404": { "description": "Pokémon introuvable" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Liste tous les utilisateurs",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Créer un utilisateur",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" },
+              "example": {
+                "email": "test@pokemon.com",
+                "password": "motdepasse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Utilisateur créé" },
+          "400": { "description": "Email déjà utilisé ou champs manquants" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Récupère un utilisateur par son ID",
+        "tags": ["Users"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Utilisateur trouvé",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+          },
+          "404": { "description": "Utilisateur introuvable" }
+        }
+      },
+      "put": {
+        "summary": "Met à jour un utilisateur",
+        "tags": ["Users"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Utilisateur mis à jour" },
+          "404": { "description": "Utilisateur introuvable" }
+        }
+      },
+      "delete": {
+        "summary": "Supprime un utilisateur",
+        "tags": ["Users"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "204": { "description": "Utilisateur supprimé" },
+          "404": { "description": "Utilisateur introuvable" }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "summary": "Connexion d'un utilisateur",
+        "tags": ["Users"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" },
+              "example": {
+                "email": "admin@gmail.com",
+                "password": "admin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Connexion réussie, retourne un token JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string", "example": "eyJhbGciOi..." }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Email ou mot de passe incorrect" },
+          "404": { "description": "Utilisateur non trouvé" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PokemonCard": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Bulbizarre" },
+          "pokedexId": { "type": "integer", "example": 1 },
+          "typeId": { "type": "integer", "example": 1 },
+          "lifePoints": { "type": "integer", "example": 45 },
+          "weight": { "type": "number", "example": 6.9 },
+          "size": { "type": "number", "example": 0.7 },
+          "imageUrl": { "type": "string", "example": "https://assets.pokemon.com/assets/cms2/img/pokedex/full/001.png" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "email": { "type": "string", "example": "admin@gmail.com" },
+          "password": { "type": "string", "example": "motdepasse" }
+        }
+      },
+      "Type": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Normal" }
+        }
+      }
+    }
+  }
+}

@@ -84,12 +84,12 @@ describe('API des cartes Pokémon', () => {
     });
   });
 
-  describe('PUT /pokemons-cards/:id', () => {
+  describe('PATCH /pokemons-cards/:id', () => {
     it('devrait mettre à jour une carte Pokémon', async () => {
       prismaMock.pokemonCard.update.mockResolvedValue(mockCard);
 
       const response = await request(app)
-        .put('/pokemons-cards/1')
+        .patch('/pokemons-cards/1')
         .set('Authorization', 'Bearer token')
         .send(mockCard);
 
@@ -103,7 +103,7 @@ describe('API des cartes Pokémon', () => {
       );
 
       const response = await request(app)
-        .put('/pokemons-cards/999')
+        .patch('/pokemons-cards/999')
         .set('Authorization', 'Bearer token')
         .send(mockCard);
 

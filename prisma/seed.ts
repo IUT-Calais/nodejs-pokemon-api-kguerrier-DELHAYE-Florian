@@ -3,8 +3,12 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
- 
+  // Supprime types, cartes et utilisateurs
   await prisma.type.deleteMany();
+  await prisma.pokemonCard.deleteMany();
+  await prisma.user.deleteMany();
+
+  // Ajoute les types Pokémon
   await prisma.type.createMany({
     data: [
       { name: 'Normal' },
@@ -28,27 +32,32 @@ async function main() {
     ],
   });
 
-  await prisma.pokemonCard.deleteMany();
+  // Récupère le type "Normal"
+  const normalType = await prisma.type.findUnique({ where: { name: 'Normal' } });
+  if (!normalType) throw new Error('Type Normal non trouvé');
+
+  // Crée Bulbizarre
   await prisma.pokemonCard.create({
     data: {
       name: 'Bulbizarre',
       pokedexId: 1,
-      typeId: 1,
+      typeId: normalType.id,
       lifePoints: 45,
       weight: 6.9,
       size: 0.7,
-      imageUrl: 'https://assets.pokemon.com/assets/cms2/img/pokedex/full/001.png'
+      imageUrl: 'https://assets.pokemon.com/assets/cms2/img/pokedex/full/001.png',
     },
   });
 
-  await prisma.user.deleteMany();
+  // Crée utilisateur admin
   await prisma.user.create({
     data: {
       email: 'admin@gmail.com',
-      password: 'admin', 
+      password: 'admin',
     },
   });
-  console.log('Seed completed!');
+
+  console.log('Seed terminé !');
 }
 
 main()

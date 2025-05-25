@@ -77,28 +77,25 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-  // Connexion d'un utilisateur
+// Connexion d'un utilisateur
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    // Vérifier si les champs sont présents
     if (!email || !password) {
       res.status(400).json({ error: 'Email et mot de passe requis' });
       return;
     }
 
-    // Rechercher l'utilisateur par email
     const user = await prisma.user.findUnique({
       where: { email }
     });
 
     if (!user) {
-      res.status(400).json({ error: 'Email ou mot de passe incorrect' });
+      res.status(404).json({ error: 'Utilisateur non trouvé' });
       return;
     }
 
-    // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -113,7 +110,7 @@ export const loginUser = async (req: Request, res: Response) => {
       { expiresIn: '1h' }
     );
 
-    res.status(200).json({ token });
+    res.status(201).json({ token });
   } catch (error) {
     const errorMessage = (error as Error).message || 'Une erreur est survenue';
     res.status(500).json({ error: errorMessage });

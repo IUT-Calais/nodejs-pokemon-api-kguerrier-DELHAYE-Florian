@@ -13,7 +13,7 @@ router.get('/:id', getUserById);
 // Création d'un utilisateur
 router.post('/', createUser);
 
-// Connexion d'un user
-router.post('/login', verifyJWT, loginUser);
+// Connexion d'un utilisateur
+router.post('/login', loginUser);
 
 export default router;

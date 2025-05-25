@@ -2,7 +2,6 @@ import request from 'supertest';
 import { app, stopServer } from '../src';
 import { prismaMock } from './jest.setup';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
 afterAll(() => {
   stopServer();
@@ -93,7 +92,7 @@ describe('API des utilisateurs', () => {
     });
   });
 
-  describe('POST /login', () => {
+  describe('POST /users/login', () => {
     it('devrait connecter un utilisateur et retourner un token', async () => {
       const password = 'password123';
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -101,7 +100,7 @@ describe('API des utilisateurs', () => {
 
       prismaMock.user.findUnique.mockResolvedValue(user);
 
-      const res = await request(app).post('/login').send({ email: user.email, password });
+      const res = await request(app).post('/users/login').send({ email: user.email, password });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('token');
@@ -110,7 +109,7 @@ describe('API des utilisateurs', () => {
     it('devrait retourner une erreur si l\'utilisateur n\'existe pas', async () => {
       prismaMock.user.findUnique.mockResolvedValue(null);
 
-      const res = await request(app).post('/login').send({ email: 'nonexistent@example.com', password: 'password123' });
+      const res = await request(app).post('/users/login').send({ email: 'nonexistent@example.com', password: 'password123' });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
@@ -123,14 +122,14 @@ describe('API des utilisateurs', () => {
 
       prismaMock.user.findUnique.mockResolvedValue(user);
 
-      const res = await request(app).post('/login').send({ email: user.email, password });
+      const res = await request(app).post('/users/login').send({ email: user.email, password });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
     });
 
     it('devrait retourner une erreur si des champs sont manquants', async () => {
-      const res = await request(app).post('/login').send({ email: '' });
+      const res = await request(app).post('/users/login').send({ email: '' });
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('error');
