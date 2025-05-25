@@ -1,108 +1,121 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
-
+// Récupérer tous les utilisateurs
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany();
-    res.json(users);
+    res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
+// Récupérer un utilisateur par son ID
 export const getUserById = async (req: Request, res: Response) => {
   try {
+    const id = parseInt(req.params.id);
     const user = await prisma.user.findUnique({
-      where: {
-        id: parseInt(req.params.id),
-      }
+      where: { id }
     });
-    res.json(user);
+    if (user) {
+      res.status(200).json(user);
+      return;
+    }
+    res.status(404).json({ error: 'Utilisateur introuvable' });
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
+// Créer un nouvel utilisateur
 export const createUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+
+    // Vérifier si les champs sont présents
     if (!email || !password) {
-        res.status(400).json({ error: `Email ou mot de passe manquant` });
-        return;
+      res.status(400).json({ error: 'Email et mot de passe requis' });
+      return;
     }
-    const mail_utilise = await prisma.user.findUnique({
-        where: { email },
+
+    // Vérifier si l'utilisateur existe déjà
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
-    if (mail_utilise) {
-        res.status(400).json({ error: `L'email est déjà utilisé` });
-        return;
+
+    if (existingUser) {
+      res.status(400).json({ error: 'Un utilisateur avec cet email existe déjà' });
+      return;
     }
-    const password_crypte = await bcrypt.hash(password, 10);
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer l'utilisateur
     const user = await prisma.user.create({
       data: {
-        email: req.body.email,
-        password: password_crypte,
+        email,
+        password: hashedPassword
       }
     });
+
     res.status(201).json({
-        data: user,
-        message: `Utilisateur créé avec succès`,
+      message: 'Utilisateur créé avec succès',
+      data: {
+        id: user.id,
+        email: user.email
+      }
     });
-    return;
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
-export const loginUser = async (req: Request, res: Response) => { 
+  // Connexion d'un utilisateur
+export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body; 
+    const { email, password } = req.body;
 
+    // Vérifier si les champs sont présents
     if (!email || !password) {
-      res.status(400).json({ error: 'Email ou mot de passe manquant' });
+      res.status(400).json({ error: 'Email et mot de passe requis' });
       return;
     }
 
+    // Rechercher l'utilisateur par email
     const user = await prisma.user.findUnique({
-      where: {
-        email: email,
-      }
+      where: { email }
     });
 
     if (!user) {
-      res.status(400).json({ error: "L'utilisateur n'existe pas." });
+      res.status(400).json({ error: 'Email ou mot de passe incorrect' });
       return;
     }
 
-    bcrypt.compare(password, user.password, () => {
-      if (password != user.password) {
-        res.status(400).json({error: "Mot de passe incorrect"});
-        return;
-      }
-      const token = jwt.sign(
-        { email: email }, // Payload
-        process.env.JWT_SECRET as jwt.Secret, // Secret
-        { expiresIn: '1d'} // Expiration
-      );
-      res.status(200).json({token});
-    });
+    // Vérifier le mot de passe
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      res.status(400).json({ error: 'Email ou mot de passe incorrect' });
+      return;
+    }
+
+    // Générer un token JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'secret_key',
+      { expiresIn: '1h' }
+    );
+
+    res.status(200).json({ token });
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };

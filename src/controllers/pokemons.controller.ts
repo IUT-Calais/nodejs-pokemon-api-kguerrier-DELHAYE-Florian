@@ -1,43 +1,44 @@
 import { Request, Response } from 'express';
-import { PrismaClient, PokemonCard } from '@prisma/client';
+import { PokemonCard } from '@prisma/client';
 import prisma from '../client';
 
+// Récupérer tous les Pokémon
 export const getPokemons = async (req: Request, res: Response) => {
   try {
     const pokemonCards: PokemonCard[] = await prisma.pokemonCard.findMany();
-    if (pokemonCards) {
+    if (pokemonCards.length > 0) {
       res.status(200).json(pokemonCards);
-      return
+      return;
     }
-    res.status(400).json({ error: 'Pokémons introuvable' })
+    res.status(404).json({ error: 'Pokémons introuvables' });
   } catch (error) {
-    res.status(500).json({ error: 'Une erreur est survenue' });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
+// Récupérer un Pokémon par son ID
 export const getPokemonById = async (req: Request, res: Response) => {
   try {
-    const pokemonCard: PokemonCard | null = await prisma.pokemonCard.findUnique({
-      where: {
-        id: parseInt(req.params.id),
-      }
+    const id = parseInt(req.params.id);
+    const pokemonCard = await prisma.pokemonCard.findUnique({
+      where: { id }
     });
     if (pokemonCard) {
       res.status(200).json(pokemonCard);
-      return
+      return;
     }
-    res.status(400).json({ error: 'Pokémon introuvable' })
+    res.status(404).json({ error: 'Pokémon introuvable' });
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
+// Créer un nouveau Pokémon
 export const createPokemon = async (req: Request, res: Response) => {
   try {
-    const pokemonCard: PokemonCard = await prisma.pokemonCard.create({
+    const pokemonCard = await prisma.pokemonCard.create({
       data: {
         name: req.body.name,
         pokedexId: req.body.pokedexId,
@@ -48,21 +49,19 @@ export const createPokemon = async (req: Request, res: Response) => {
         imageUrl: req.body.imageUrl
       }
     });
-    res.json(pokemonCard);
+    res.status(201).json(pokemonCard);
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message || 'Une erreur est survenue';
+    res.status(500).json({ error: errorMessage });
   }
 };
 
+// Mettre à jour un Pokémon existant (PUT et PATCH)
 export const updatePokemon = async (req: Request, res: Response) => {
   try {
-    const pokemonCard: PokemonCard = await prisma.pokemonCard.update({
-      where: {
-        id: parseInt(req.params.id),
-      },
+    const id = parseInt(req.params.id);
+    const pokemonCard = await prisma.pokemonCard.update({
+      where: { id },
       data: {
         name: req.body.name,
         pokedexId: req.body.pokedexId,
@@ -73,27 +72,37 @@ export const updatePokemon = async (req: Request, res: Response) => {
         imageUrl: req.body.imageUrl
       }
     });
-    res.json(pokemonCard);
+    res.status(200).json(pokemonCard);
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message;
+    if (errorMessage?.includes('Record to update not found')) {
+      res.status(404).json({ error: 'Pokémon introuvable' });
+    } else {
+      res.status(500).json({ error: errorMessage || 'Une erreur est survenue' });
+    }
   }
 };
 
+// Pour supporter PUT (en plus de PATCH)
+export const updatePokemonPut = updatePokemon;
+
+// Supprimer un Pokémon
 export const deletePokemon = async (req: Request, res: Response) => {
   try {
-    const pokemonCard: PokemonCard = await prisma.pokemonCard.delete({
-      where: {
-        id: parseInt(req.params.id),
-      }
+    const id = parseInt(req.params.id);
+    await prisma.pokemonCard.delete({
+      where: { id }
     });
-    res.json(pokemonCard);
+    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ 
-      error: error,
-      body: req.body,
-    });
+    const errorMessage = (error as Error).message;
+    if (
+      errorMessage?.includes('Record to delete does not exist') ||
+      errorMessage?.includes('Record to update not found')
+    ) {
+      res.status(404).json({ error: 'Pokémon introuvable' });
+    } else {
+      res.status(500).json({ error: errorMessage || 'Une erreur est survenue' });
+    }
   }
 };
